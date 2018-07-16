@@ -55,11 +55,11 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView {
     @Override
     protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
       super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
-        restScrollRange = actualScrollRange - scrollX;
-        System.out.printf("%4d %4d\n", restScrollRange, scrollX);
-        if (restScrollRange < 50) {
-            System.out.println("max");
-            LinearLayout container = (LinearLayout) getChildAt(0);
+//        restScrollRange = actualScrollRange - scrollX;
+        LinearLayout container = (LinearLayout) getChildAt(0);
+//        System.out.printf("%4d %4d\n", restScrollRange, scrollX);
+        if (scrollX > container.getChildAt(0).getWidth()) {
+            System.out.println("view changed");
             View v = container.getChildAt(0);
             container.removeView(v);
             container.addView(v);
