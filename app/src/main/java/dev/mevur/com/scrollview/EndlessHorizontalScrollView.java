@@ -135,7 +135,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
 
                 if (0 != angelx || 0 != angely || 0 != angelz) {
                     float dx = (newAngelX - angelx) * MAGINIFY_FACTOR;
-                    float dy = (newAngelY - angely);
+                    float dy = (newAngelY - angely) * MAGINIFY_FACTOR;
                     float dz = (newAngelZ - angelz) * MAGINIFY_FACTOR;
 
                     System.out.println(dy + " " + dz);
@@ -143,7 +143,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
                     // UP ROTATION
                     smoothScrollBy((int) (dy * pixelsPerDegree), 0);
                     // HORIZONTAL ROTATION
-                    smoothScrollBy((int) (dz * pixelsPerDegree / MAGINIFY_FACTOR), 0);
+                    smoothScrollBy((int) (dz * pixelsPerDegree), 0);
                 }
                 angelx = newAngelX;
                 angely = newAngelY;
