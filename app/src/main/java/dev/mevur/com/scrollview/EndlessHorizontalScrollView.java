@@ -47,17 +47,18 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
 
     private void init(Context context) {
         this.context = context;
-        setEnabled(false);
-        setOverScrollMode(OVER_SCROLL_NEVER);
-        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        gyroScopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        sensorManager.registerListener(this, gyroScopeSensor, SensorManager.SENSOR_DELAY_GAME);
+//        setEnabled(true);
+//        setOverScrollMode(OVER_SCROLL_NEVER);
+//        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+//        gyroScopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+//        sensorManager.registerListener(this, gyroScopeSensor, SensorManager.SENSOR_DELAY_GAME);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         //disable touch to scroll
-        return false;
+        return super.onTouchEvent(ev);
+//        return false;
     }
 
 
@@ -66,7 +67,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         super.onLayout(changed, l, t, r, b);
         actualScrollRange = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
         restScrollRange = actualScrollRange;
-        System.out.println(actualScrollRange);
+        System.out.println(computeHorizontalScrollRange());
     }
 
     public void addImg() {
@@ -84,6 +85,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
       super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
       //implement endless scroll
 //        restScrollRange = actualScrollRange - scrollX;
+//        System.out.println(scrollX);
         LinearLayout container = (LinearLayout) getChildAt(0);
 //        System.out.printf("%4d %4d\n", restScrollRange, scrollX);
         if (scrollX > container.getChildAt(0).getWidth()) {
@@ -110,7 +112,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         //there is where the view die
-        sensorManager.unregisterListener(this);
+//        sensorManager.unregisterListener(this);
     }
 
     @Override
@@ -129,19 +131,21 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
                 float newAngelY = (float) Math.toDegrees(radValues[1]);
                 float newAngelZ = (float) Math.toDegrees(radValues[2]);
 
+//                System.out.println(newAngelX + " " + newAngelY + " " + newAngelY);
+
                 // dx 仰俯
                 // dy 竖直旋转
                 // dz 水平旋转
 
                 if (0 != angelx || 0 != angely || 0 != angelz) {
-                    float dx = (newAngelX - angelx) * MAGINIFY_FACTOR;
-                    float dy = (newAngelY - angely) * MAGINIFY_FACTOR;
-                    float dz = (newAngelZ - angelz) * MAGINIFY_FACTOR;
+                    float dx = (newAngelX - angelx);
+                    float dy = (newAngelY - angely);
+                    float dz = (newAngelZ - angelz);
 
-                    System.out.println(dy + " " + dz);
+//                    System.out.println(dx + " " + dy + " " + dz);
                     // when rotation detected, scroll the content
                     // UP ROTATION
-                    smoothScrollBy((int) (dy * pixelsPerDegree), 0);
+//                    smoothScrollBy((int) (dy * pixelsPerDegree), 0);
                     // HORIZONTAL ROTATION
                     smoothScrollBy((int) (dz * pixelsPerDegree), 0);
                 }
