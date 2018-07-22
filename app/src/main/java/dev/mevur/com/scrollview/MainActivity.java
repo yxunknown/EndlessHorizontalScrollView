@@ -5,12 +5,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.EditText;
-
-import com.google.vr.sdk.widgets.pano.VrPanoramaView;
 
 public class MainActivity extends AppCompatActivity
         implements SensorEventListener {
@@ -75,64 +72,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        int pixelsPerDegree = scrollView.getMaxScroll() / 360;
         //<editor-fold desc="gyroscope sensor">
         if (Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
             //handle gyroscope sensor data here
-            if (0 != timestamp) {
-                float dt = (event.timestamp - timestamp) * NS2S;
-                float[] radValues = new float[3];
-                radValues[0] = event.values[0] * dt;
-                radValues[1] = event.values[1] * dt;
-                radValues[2] = event.values[2] * dt;
-
-                double newAngelX = radValues[0] * 180 / Math.PI;
-                double newAngelY = radValues[1] * 180 / Math.PI;
-                double newAngelZ = radValues[1] * 180 / Math.PI;
-                if (newAngelx == -111111113) {
-                    newAngelx = newAngelX;
-                    newAngely = newAngelY;
-                    newAngelz = newAngelZ;
-                    if (oldAngelx == -111111113) {
-                        oldAngelx = newAngelX;
-                        oldAngely = newAngelY;
-                        oldAngelz = newAngelZ;
-                    }
-                } else {
-                    // dx 仰俯
-                    // dy 竖直旋转
-                    // dz 水平旋转
-                    double dx = newAngelx - oldAngelx;
-                    double dy = newAngely - oldAngely;
-                    double dz = newAngelz - oldAngelz;
-                    if (Math.abs(dy * pixelsPerDegree) > 0) {
-
-
-//                    System.out.println(dy);
-                        // when rotation detected, scroll the content
-                        // UP ROTATION
-//                    smoothScrollBy((int) (dy * pixelsPerDegree), 0);
-                        // HORIZONTAL ROTATION
-                        scrollView.smoothScrollBy((int) (dy * pixelsPerDegree), 0);
-                        oldAngely = newAngely;
-                        oldAngelz = newAngelz;
-                        oldAngelx = newAngelx;
-                        newAngelz = -111111113;
-                        newAngely = -111111113;
-                        newAngelx = -111111113;
-                    } else {
-                        newAngelx += newAngelX;
-                        newAngely += newAngelY;
-                        newAngelz += newAngelZ;
-                    }
-                }
-            }
-            timestamp = event.timestamp;
         }
         //</editor-fold>
         if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
             float direction = event.values[0];
-            scrollView.smoothScrollTo((int) (direction * pixelsPerDegree), 0);
+            scrollView.updateOrientation(direction);
         }
 
     }
