@@ -1,91 +1,90 @@
 package dev.mevur.com.scrollview;
 
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity
-        implements SensorEventListener {
-    private static final float NANO_SECOND_TO_SECOND = 1.0F / 1000000000.0F;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
     private EndlessHorizontalScrollView scrollView;
-
-    private Sensor accelerometer;
-    private Sensor magnetic;
-
-    private SensorManager sensorManager;
-    private Sensor gyroScope;
-
-    private float[] accelerometerValues = new float[3];
-    private float[] magneticFieldValues = new float[3];
-
-    private float north = -11113332;
-
-    private long timestamp;
-
-    private static final float NS2S = 1.0f / 1000000000.0f;
-    private float[] angle = new float[3];
-
-//    private double oldAngely = -111111113;
-
-    private double oldAngelx = -111111113;
-    private double oldAngely = -111111113;
-    private double oldAngelz = -111111113;
-
-    private double newAngelx = -111111113;
-    private double newAngely = -111111113;
-    private double newAngelz = -111111113;
-
-    private Sensor orientationSensor;
-
-
+    private List<Data> datas;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         scrollView = findViewById(R.id.scrollView);
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        gyroScope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        orientationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
-        sensorManager.registerListener(this, orientationSensor, SensorManager.SENSOR_DELAY_GAME);
-//        if (null != gyroScope) {
-//            sensorManager.registerListener(this, gyroScope,
-//                    SensorManager.SENSOR_DELAY_GAME);
-//        }
-//        VrPanoramaView vrPanoramaView = new VrPanoramaView(this);
+        datas = new ArrayList<>();
+        Data data = new Data();
+        data.setDirection(13);
+        data.setImg(R.drawable.logo_cinema);
+        data.setText("电影院啊换还好还好");
+        datas.add(data);
+        data = new Data();
+        data.setText("沃尔玛超市孙大伟哇阿信");
+        data.setImg(R.drawable.logo_cinema);
+        data.setDirection(46);
+        datas.add(data);
+        data = new Data();
+        data.setDirection(182);
+        data.setImg(R.drawable.logo_cinema);
+        data.setText("tip tak 旗舰店");
+        datas.add(data);
+        data = new Data();
+        data.setText("肯德基南坪");
+        data.setImg(R.drawable.logo_kfc);
+        data.setDirection(236);
+        datas.add(data);
+        MAdapter mAdapter = new MAdapter(datas, this);
+        scrollView.setAdapter(mAdapter);
     }
 
-    public void addView(View view) {
-//        scrollView.addImg();
-    }
+    private class MAdapter extends EndlessHorizontalScrollViewAdapter {
+        private List<Data> data;
+        private Context context;
+        private LayoutInflater layoutInflater;
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        this.sensorManager.unregisterListener(this);
-    }
+        public MAdapter(@NonNull List<Data> data, @NonNull Context context) {
+            this.data = data;
+            this.context = context;
+            this.layoutInflater = LayoutInflater.from(this.context);
+        }
+        @Override
+        double getDirection(int position) {
+            return data.get(position).getDirection();
+        }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
+        @Override
+        public int getCount() {
+            return data.size();
+        }
 
-//        //<editor-fold desc="gyroscope sensor">
-//        if (Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
-//            //handle gyroscope sensor data here
-//        }
-//        //</editor-fold>
-//        if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
-//            float direction = event.values[0];
-//            scrollView.updateOrientation(direction);
-//        }
+        @Override
+        public Object getItem(int position) {
+            return data.get(position);
+        }
 
-    }
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Data data = datas.get(position);
+            convertView = layoutInflater.inflate(R.layout.data_item, null);
+            TextView textView = convertView.findViewById(R.id.text);
+            ImageView img = convertView.findViewById(R.id.img);
+            textView.setText(data.getText());
+            img.setImageResource(data.getImg());
+            return convertView;
+        }
     }
 }

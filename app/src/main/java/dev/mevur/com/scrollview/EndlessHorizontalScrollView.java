@@ -9,16 +9,20 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.support.annotation.NonNull;
 import android.support.v7.view.menu.ListMenuItemView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 import java.util.Random;
 
@@ -37,6 +41,9 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     private DisplayMetrics displayMetrics;
 
     private LinearLayout.LayoutParams itemLayoutParams;
+
+    private EndlessHorizontalScrollViewAdapter mAdapter;
+
 
 
 
@@ -74,20 +81,15 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         }
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        //disable touch to scroll
-        return false;
+    /**
+     * set view adapter for current adapter
+     * @param adapter adapter
+     */
+    public void setAdapter(@NonNull EndlessHorizontalScrollViewAdapter adapter) {
+        this.mAdapter = adapter;
     }
 
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-
-
-    }
-
+    //<editor-fold desc="life cycle of scroll view">
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -108,13 +110,14 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         // fill scroll view automatically
         if (0 == getChildCount()) {
             // current scroll view has no child
-            // add a linear layout to scroll view
-            LinearLayout linearLayout = new LinearLayout(context);
+            // add a linear layout to scroll view as container
+            LinearLayout linearLayout = getLinearLayout();
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
             addView(linearLayout);
         } else if (!(getChildAt(0) instanceof LinearLayout)) {
+            // change child view to linear layout as container
             removeViewAt(0);
-            LinearLayout linearLayout = new LinearLayout(context);
+            LinearLayout linearLayout = getLinearLayout();
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
             addView(linearLayout);
         }
@@ -123,23 +126,54 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
             // remove all view then to add 26 child views
             container.removeAllViews();
             for (int i = 0; i < 26; i++) {
-                LinearLayout child = new LinearLayout(context);
+                LinearLayout child = getLinearLayout();
                 child.setOrientation(LinearLayout.VERTICAL);
                 child.setLayoutParams(itemLayoutParams);
-                Random random = new Random();
-
-                child.setBackgroundColor(Color.rgb(random.nextInt(255),
-                        random.nextInt(255),
-                        random.nextInt(255)));
+                child.setGravity(Gravity.CENTER);
                 container.addView(child);
             }
         }
-        Drawable drawable = container.getChildAt(1).getBackground();
-        container.getChildAt(25).setBackground(drawable);
-        drawable = container.getChildAt(24).getBackground();
-        container.getChildAt(0).setBackground(drawable);
-
+        if (null != mAdapter) {
+            int childViewsCount = mAdapter.getCount();
+            System.out.println(childViewsCount);
+            for (int index = 0; index < childViewsCount; index++) {
+                View view = mAdapter.getView(index, null, this);
+                double direction = mAdapter.getDirection(index);
+                if (null != view) {
+                    addView(direction, view, index);
+                }
+            }
+            System.out.println("????");
+        }
         System.out.println(((LinearLayout) getChildAt(0)).getChildCount());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+    }
+
+    /**
+     * get child view container from child view containers
+     * NOTED:
+     * A whole 360 degree is divide to 24 areas
+     * each area can display 15 degree range of data
+     * hence, this method can select an area to display a view based on direction
+     * @param direction a angel at degree unit between 0 to 360
+     * @return a child view container
+     */
+    private void addView(double direction, View view, int position) {
+        int direc = (int) direction;
+        int index = direc % 15 == 0 ? direc / 15 : (direc / 15) + 1;
+        ((LinearLayout) container.getChildAt(index)).addView(view);
+        if (index == 1) {
+            ((LinearLayout) container.getChildAt(25)).addView(
+                    mAdapter.getView(position, null, this));
+        }
+        if (index == 24) {
+            ((LinearLayout) container.getChildAt(0)).addView(
+                    mAdapter.getView(position, null, this));
+        }
     }
 
     @Override
@@ -148,17 +182,35 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         pixelsPerDegree = (computeHorizontalScrollRange() - 1080) / 360.0f;
     }
 
-    public int getMaxScroll() {
-        return computeHorizontalScrollRange();
-    }
-
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         //there is where the view die
         sensorManager.unregisterListener(this);
     }
+    //</editor-fold>
 
+    /**
+     * override to disable this scroll view scrolling by user touch event input
+     * @param ev
+     * @return
+     */
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        //disable touch to scroll
+        return false;
+    }
+
+    /**
+     * generate a new linear layout
+     * @return a new LinearLayout instance
+     */
+    @NonNull
+    private LinearLayout getLinearLayout() {
+        return new LinearLayout(context);
+    }
+
+    //<editor-fold desc="sensor event change listener">
     @Override
     public void onSensorChanged(SensorEvent event) {
        if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
@@ -170,9 +222,15 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+    //</editor-fold>
 
+    /**
+     * update current viewport based on orientation
+     * @param orientation current orientation
+     */
     public void updateOrientation(double orientation) {
         int scrollTO = (int) (orientation * pixelsPerDegree);
+        System.out.println(orientation + " " + pixelsPerDegree + " " + scrollTO);
         smoothScrollTo(scrollTO, 0);
     }
 }
