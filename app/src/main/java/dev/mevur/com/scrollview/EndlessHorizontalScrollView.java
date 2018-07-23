@@ -2,35 +2,41 @@ package dev.mevur.com.scrollview;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.support.v7.view.menu.ListMenuItemView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import java.util.Random;
+
 public class EndlessHorizontalScrollView extends HorizontalScrollView
-        implements SensorEventListener{
+        implements SensorEventListener {
     private static final float NANO_SECOND_TO_SECOND = 1.0F / 1000000000.0F;
-    private static final int MAGINIFY_FACTOR = 1000;
     private Context context;
-    private int actualScrollRange;
-    private int restScrollRange;
-    private Sensor gyroScopeSensor;
+    //sensor manager & orientation sensor
     private SensorManager sensorManager;
-    private long timestamp;
-    private float angelx;
-    private float angely;
-    private float angelz;
+    private Sensor orientationSensor;
+
     private float pixelsPerDegree;
     private LinearLayout container;
+
+    //get the width & height of current screen
+    private DisplayMetrics displayMetrics;
+
+    private LinearLayout.LayoutParams itemLayoutParams;
 
 
 
@@ -51,17 +57,26 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
 
     private void init(Context context) {
         this.context = context;
-//        setEnabled(true);
-//        setOverScrollMode(OVER_SCROLL_NEVER);
-//        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-//        gyroScopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-//        sensorManager.registerListener(this, gyroScopeSensor, SensorManager.SENSOR_DELAY_GAME);
+        //init sensor
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        //get accelerometer sensor and magnetic sensor
+        orientationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+        //
+        // although SensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION) is deprecated,
+        // but the data of SensorManager.getOrientation(rotationMetrics, orientationValues),
+        // orientationValues can not get a stable value.
+        //
+
+        if (null != orientationSensor) {
+            //register sensor change event listener
+            sensorManager.registerListener(this, orientationSensor,
+                    SensorManager.SENSOR_DELAY_GAME);
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         //disable touch to scroll
-//        return super.onTouchEvent(ev);
         return false;
     }
 
@@ -69,37 +84,62 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-    }
 
-    public void addImg() {
-//        LinearLayout container = (LinearLayout) getChildAt(0);
-//        ImageView imageView = new ImageView(context);
-//        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-//                ViewGroup.LayoutParams.WRAP_CONTENT);
-//        imageView.setLayoutParams(lp);
-//        imageView.setImageResource(R.drawable.test);
-//        container.addView(imageView);
+
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        actualScrollRange = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
-        restScrollRange = actualScrollRange;
+        if (null == displayMetrics) {
+            // get current screen display metrics
+            displayMetrics = new DisplayMetrics();
+            getDisplay().getMetrics(displayMetrics);
+            // get width & height at pixels of current screen
+            int width = displayMetrics.widthPixels;
+            int height = displayMetrics.heightPixels;
+            // construct layout params of each child view of container
+            itemLayoutParams = new LinearLayout.LayoutParams(width / 2, height);
 
-        pixelsPerDegree = (computeHorizontalScrollRange() - 1080) / 360.0f;
-
-        container = (LinearLayout) getChildAt(0);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-        int height = displayMetrics.heightPixels;
-        for (int i = 0; i < container.getChildCount(); i++) {
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width / 2, height);
-            container.getChildAt(i).setLayoutParams(lp);
-
+            // every screen can display 30 degree range of data
+            // each item can display 15 degree range of data
+            // therefore, for 360 degree, need 360 / 15 = 24 items to display all data
         }
+        // fill scroll view automatically
+        if (0 == getChildCount()) {
+            // current scroll view has no child
+            // add a linear layout to scroll view
+            LinearLayout linearLayout = new LinearLayout(context);
+            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            addView(linearLayout);
+        } else if (!(getChildAt(0) instanceof LinearLayout)) {
+            removeViewAt(0);
+            LinearLayout linearLayout = new LinearLayout(context);
+            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            addView(linearLayout);
+        }
+        container = (LinearLayout) getChildAt(0);
+        if (26 != container.getChildCount()) {
+            // remove all view then to add 26 child views
+            container.removeAllViews();
+            for (int i = 0; i < 26; i++) {
+                LinearLayout child = new LinearLayout(context);
+                child.setOrientation(LinearLayout.VERTICAL);
+                child.setLayoutParams(itemLayoutParams);
+                Random random = new Random();
 
+                child.setBackgroundColor(Color.rgb(random.nextInt(255),
+                        random.nextInt(255),
+                        random.nextInt(255)));
+                container.addView(child);
+            }
+        }
+        Drawable drawable = container.getChildAt(1).getBackground();
+        container.getChildAt(25).setBackground(drawable);
+        drawable = container.getChildAt(24).getBackground();
+        container.getChildAt(0).setBackground(drawable);
+
+        System.out.println(((LinearLayout) getChildAt(0)).getChildCount());
     }
 
     @Override
@@ -108,33 +148,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         pixelsPerDegree = (computeHorizontalScrollRange() - 1080) / 360.0f;
     }
 
-    @Override
-    protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
-      super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
-      //implement endless scroll
-//        restScrollRange = actualScrollRange - scrollX;
-//        System.out.println(scrollX);
-        LinearLayout container = (LinearLayout) getChildAt(0);
-//        System.out.printf("%4d %4d\n", restScrollRange, scrollX);
-        System.out.println(scrollX);
-        if (scrollX > container.getChildAt(0).getWidth()) {
-            System.out.println("view changed");
-            View v = container.getChildAt(0);
-            container.removeView(v);
-            container.addView(v);
-            restScrollRange += v.getWidth();
-            scrollTo(scrollX - v.getWidth(), 0);
-        }
-    }
-
-    @Override
-    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-        super.onScrollChanged(l, t, oldl, oldt);
-//        System.out.println("l = [" + l + "], t = [" + t + "], oldl = [" + oldl + "], oldt = [" + oldt + "]");
-    }
-
     public int getMaxScroll() {
-        System.out.println();
         return computeHorizontalScrollRange();
     }
 
@@ -142,15 +156,14 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         //there is where the view die
-//        sensorManager.unregisterListener(this);
+        sensorManager.unregisterListener(this);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        pixelsPerDegree = computeHorizontalScrollRange() / 360;
-        if (Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
-            //handle gyroscope sensor data here
-        }
+       if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
+           updateOrientation(event.values[0]);
+       }
     }
 
     @Override
@@ -158,10 +171,8 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
 
     }
 
-    public void updateOrientation(float orientation) {
+    public void updateOrientation(double orientation) {
         int scrollTO = (int) (orientation * pixelsPerDegree);
-        System.out.println("degree: " + orientation + ",   scroll to:" + scrollTO +
-                ",    dpp:" + pixelsPerDegree + ",   total:" + computeHorizontalScrollRange());
         smoothScrollTo(scrollTO, 0);
     }
 }

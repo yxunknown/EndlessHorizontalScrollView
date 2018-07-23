@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void addView(View view) {
-        scrollView.addImg();
+//        scrollView.addImg();
     }
 
     @Override
@@ -72,15 +72,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        //<editor-fold desc="gyroscope sensor">
-        if (Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
-            //handle gyroscope sensor data here
-        }
-        //</editor-fold>
-        if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
-            float direction = event.values[0];
-            scrollView.updateOrientation(direction);
-        }
+//        //<editor-fold desc="gyroscope sensor">
+//        if (Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
+//            //handle gyroscope sensor data here
+//        }
+//        //</editor-fold>
+//        if (Sensor.TYPE_ORIENTATION == event.sensor.getType()) {
+//            float direction = event.values[0];
+//            scrollView.updateOrientation(direction);
+//        }
 
     }
 
