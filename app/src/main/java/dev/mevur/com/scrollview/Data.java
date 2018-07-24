@@ -5,6 +5,11 @@ public class Data {
     private String text;
     private int img;
 
+    // 0 for text & img
+    // 1 for img only
+    // default type is 0
+    private int type = 0;
+
     public double getDirection() {
         return direction;
     }
@@ -27,5 +32,13 @@ public class Data {
 
     public void setImg(int img) {
         this.img = img;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

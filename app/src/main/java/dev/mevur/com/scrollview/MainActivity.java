@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.facebook.drawee.view.SimpleDraweeView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,18 +31,28 @@ public class MainActivity extends AppCompatActivity {
         datas.add(data);
         data = new Data();
         data.setText("沃尔玛超市孙大伟哇阿信");
-        data.setImg(R.drawable.logo_cinema);
+        data.setImg(R.drawable.logo_walmart);
         data.setDirection(46);
         datas.add(data);
         data = new Data();
         data.setDirection(182);
-        data.setImg(R.drawable.logo_cinema);
+        data.setImg(R.drawable.logo_tip);
         data.setText("tip tak 旗舰店");
         datas.add(data);
         data = new Data();
         data.setText("肯德基南坪");
         data.setImg(R.drawable.logo_kfc);
         data.setDirection(236);
+        datas.add(data);
+        data = new Data();
+        data.setImg(R.drawable.post);
+        data.setDirection(80);
+        data.setType(1);
+        datas.add(data);
+        data = new Data();
+        data.setType(1);
+        data.setImg(R.drawable.post2);
+        data.setDirection(138);
         datas.add(data);
         MAdapter mAdapter = new MAdapter(datas, this);
         scrollView.setAdapter(mAdapter);
@@ -79,11 +91,17 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             Data data = datas.get(position);
-            convertView = layoutInflater.inflate(R.layout.data_item, null);
-            TextView textView = convertView.findViewById(R.id.text);
-            ImageView img = convertView.findViewById(R.id.img);
-            textView.setText(data.getText());
-            img.setImageResource(data.getImg());
+            if (data.getType() == 0) {
+                convertView = layoutInflater.inflate(R.layout.data_item, null);
+                TextView textView = convertView.findViewById(R.id.text);
+                SimpleDraweeView img = convertView.findViewById(R.id.img);
+                textView.setText(data.getText());
+                img.setImageResource(data.getImg());
+            } else if (data.getType() == 1) {
+                convertView = layoutInflater.inflate(R.layout.data_item_img, null);
+                SimpleDraweeView simpleDraweeView = convertView.findViewById(R.id.img_view);
+                simpleDraweeView.setImageResource(data.getImg());
+            }
             return convertView;
         }
     }

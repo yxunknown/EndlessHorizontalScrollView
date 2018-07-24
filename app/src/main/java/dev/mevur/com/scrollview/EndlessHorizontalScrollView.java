@@ -1,30 +1,23 @@
 package dev.mevur.com.scrollview;
 
 import android.content.Context;
+import android.database.DataSetObserver;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.v7.view.menu.ListMenuItemView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.HorizontalScrollView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-
-import java.util.Random;
+import android.widget.ScrollView;
 
 public class EndlessHorizontalScrollView extends HorizontalScrollView
         implements SensorEventListener {
@@ -43,8 +36,6 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
     private LinearLayout.LayoutParams itemLayoutParams;
 
     private EndlessHorizontalScrollViewAdapter mAdapter;
-
-
 
 
     public EndlessHorizontalScrollView(Context context) {
@@ -79,6 +70,7 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
             sensorManager.registerListener(this, orientationSensor,
                     SensorManager.SENSOR_DELAY_GAME);
         }
+
     }
 
     /**
@@ -87,12 +79,40 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
      */
     public void setAdapter(@NonNull EndlessHorizontalScrollViewAdapter adapter) {
         this.mAdapter = adapter;
+        this.mAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                // to change data
+                // remove views
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    ((LinearLayout) container.getChildAt(i)).removeAllViews();
+                }
+                // add views
+                int childViewsCount = mAdapter.getCount();
+                for (int index = 0; index < childViewsCount; index++) {
+                    View view = mAdapter.getView(index, null,
+                            EndlessHorizontalScrollView.this);
+                    double direction = mAdapter.getDirection(index);
+                    if (null != view) {
+                        addView(direction, view, index);
+                    }
+                }
+            }
+
+            @Override
+            public void onInvalidated() {
+                super.onInvalidated();
+                // have no idea
+            }
+        });
     }
 
     //<editor-fold desc="life cycle of scroll view">
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        System.out.println("EndlessHorizontalScrollView.onMeasure");
         if (null == displayMetrics) {
             // get current screen display metrics
             displayMetrics = new DisplayMetrics();
@@ -135,7 +155,6 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         }
         if (null != mAdapter) {
             int childViewsCount = mAdapter.getCount();
-            System.out.println(childViewsCount);
             for (int index = 0; index < childViewsCount; index++) {
                 View view = mAdapter.getView(index, null, this);
                 double direction = mAdapter.getDirection(index);
@@ -143,15 +162,31 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
                     addView(direction, view, index);
                 }
             }
-            System.out.println("????");
         }
-        System.out.println(((LinearLayout) getChildAt(0)).getChildCount());
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
+        System.out.println("EndlessHorizontalScrollView.onLayout");
     }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        System.out.println("EndlessHorizontalScrollView.onDraw");
+    }
+
+
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        System.out.println("EndlessHorizontalScrollView.onDetachedFromWindow");
+        //there is where the view die
+        sensorManager.unregisterListener(this);
+    }
+    //</editor-fold>
 
     /**
      * get child view container from child view containers
@@ -160,7 +195,8 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
      * each area can display 15 degree range of data
      * hence, this method can select an area to display a view based on direction
      * @param direction a angel at degree unit between 0 to 360
-     * @return a child view container
+     * @param view the view will add on screen
+     * @param position the index of view in view adapter
      */
     private void addView(double direction, View view, int position) {
         int direc = (int) direction;
@@ -176,24 +212,10 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
         }
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        pixelsPerDegree = (computeHorizontalScrollRange() - 1080) / 360.0f;
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        //there is where the view die
-        sensorManager.unregisterListener(this);
-    }
-    //</editor-fold>
-
     /**
      * override to disable this scroll view scrolling by user touch event input
-     * @param ev
-     * @return
+     * @param ev ev
+     * @return a boolean
      */
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
@@ -229,8 +251,8 @@ public class EndlessHorizontalScrollView extends HorizontalScrollView
      * @param orientation current orientation
      */
     public void updateOrientation(double orientation) {
+        pixelsPerDegree = (computeHorizontalScrollRange() - 1080) / 360.0f;
         int scrollTO = (int) (orientation * pixelsPerDegree);
-        System.out.println(orientation + " " + pixelsPerDegree + " " + scrollTO);
         smoothScrollTo(scrollTO, 0);
     }
 }
